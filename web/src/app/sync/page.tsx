@@ -10,41 +10,58 @@ export default function SyncPage() {
 
     useEffect(() => {
         console.log('Sync page mounted, waiting for extension data...');
+        console.log('Current user:', user?.email || 'Not logged in');
 
         const handleMessage = async (event: MessageEvent) => {
-            console.log('Message received:', event.data);
+            console.log('Message received from origin:', event.origin);
+            console.log('Message data:', event.data);
+            console.log('Message type:', typeof event.data, event.data?.type);
 
-            // Basic security: In production, check event.origin
-            if (event.data && event.data.type === 'SYNC_DATA' && event.data.items) {
-                console.log('Valid SYNC_DATA message with', event.data.items.length, 'items');
+            // Check if it's our SYNC_DATA message
+            if (event.data && typeof event.data === 'object') {
+                console.log('Has type property:', event.data.type);
+                console.log('Has items property:', event.data.items);
 
-                if (!user) {
-                    setStatus('Please login to SaveIt in another tab, then try syncing again.');
-                    return;
-                }
+                if (event.data.type === 'SYNC_DATA' && Array.isArray(event.data.items)) {
+                    console.log('✅ Valid SYNC_DATA message with', event.data.items.length, 'items');
 
-                setStatus('Syncing items to cloud...');
-                const items = event.data.items;
-                let count = 0;
+                    if (!user) {
+                        console.log('❌ User not logged in');
+                        setStatus('Please login to SaveIt first, then try syncing again.');
+                        return;
+                    }
 
-                try {
-                    const batchPromises = items.map(async (item: any) => {
-                        // Basic deduplication could go here (check if ID exists)
-                        // For MVP, just add new docs
-                        await addDoc(collection(db, "savedItems"), {
-                            ...item,
-                            userId: user.uid,
-                            syncedAt: new Date().toISOString()
-                        });
-                        count++;
-                    });
+                    setStatus(`Syncing ${event.data.items.length} items to cloud...`);
+                    const items = event.data.items;
+                    let count = 0;
 
-                    await Promise.all(batchPromises);
-                    setStatus(`Successfully synced ${count} items! You can now close this tab.`);
-                    console.log('Sync complete!');
-                } catch (error) {
-                    console.error("Sync error:", error);
-                    setStatus('Error syncing items. Check console.');
+                    try {
+                        for (const item of items) {
+                            await addDoc(collection(db, "savedItems"), {
+                                text: item.text,
+                                url: item.url,
+                                title: item.title,
+                                timestamp: item.timestamp,
+                                userId: user.uid,
+                                syncedAt: new Date().toISOString()
+                            });
+                            count++;
+                            setStatus(`Syncing... ${count}/${items.length}`);
+                        }
+
+                        setStatus(`✅ Successfully synced ${count} items! Redirecting to dashboard...`);
+                        console.log('✅ Sync complete!');
+
+                        // Redirect to dashboard after 2 seconds
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 2000);
+                    } catch (error) {
+                        console.error("❌ Sync error:", error);
+                        setStatus('Error syncing items. Please try again.');
+                    }
+                } else {
+                    console.log('⚠️ Message not recognized as SYNC_DATA');
                 }
             }
         };
@@ -56,10 +73,11 @@ export default function SyncPage() {
     if (loading) return <div className="p-8">Loading auth status...</div>;
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
-                <h1 className="text-xl font-bold mb-4">SaveIt Sync</h1>
-                <p className="text-gray-600 animate-pulse">{status}</p>
+        <div className="min-h-screen flex items-center justify-center bg-[#000d26]">
+            <div className="bg-[#03122f] border border-white/20 p-8 rounded-lg shadow-md text-center max-w-md">
+                <h1 className="text-xl font-bold mb-4 text-white">SaveIt Sync</h1>
+                <p className="text-gray-300 animate-pulse mb-4">{status}</p>
+                {!user && <p className="text-sm text-yellow-400 mt-4">⚠️ Please login first</p>}
                 <p className="text-xs text-gray-400 mt-6">Listening for extension...</p>
             </div>
         </div>

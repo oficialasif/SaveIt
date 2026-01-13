@@ -28,15 +28,35 @@ export default function DashboardPage() {
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
-        if (user) fetchItems();
+        if (user) {
+            console.log('Fetching items for user:', user.uid);
+            fetchItems();
+        }
     }, [user]);
 
     const fetchItems = async () => {
+        if (!user) return;
+
         try {
-            const q = query(collection(db, "savedItems"), where("userId", "==", user?.uid));
+            setFetching(true);
+            const q = query(
+                collection(db, "savedItems"),
+                where("userId", "==", user.uid)
+            );
             const querySnapshot = await getDocs(q);
-            const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            data.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+            const data = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            // Sort by timestamp (newest first)
+            data.sort((a: any, b: any) => {
+                const timeA = new Date(a.timestamp || a.syncedAt || 0).getTime();
+                const timeB = new Date(b.timestamp || b.syncedAt || 0).getTime();
+                return timeB - timeA;
+            });
+
+            console.log('Fetched items:', data.length);
             setItems(data);
         } catch (error) {
             console.error("Error fetching items:", error);
