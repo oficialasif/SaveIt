@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SaveIt</title>
+  <style>
+    body {
+      width: 320px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+
+    header {
+      background-color: #4a90e2;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    #saved-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .item {
+      background: white;
+      border-bottom: 1px solid #eee;
+      padding: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .item:hover {
+      background-color: #f1f1f1;
+    }
+
+    .item-text {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      /* Truncate after 2 lines */
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .item-meta {
+      font-size: 11px;
+      color: #888;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .item-url {
+      max-width: 70%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .empty-state {
+      padding: 30px;
+      text-align: center;
+      color: #888;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    SaveIt
+    <button id="sync-btn"
+      style="float: right; font-size: 10px; background: white; color: #4a90e2; border: none; padding: 2px 5px; cursor: pointer; border-radius: 3px;">Sync</button>
+  </header>
+  <ul id="saved-list"></ul>
+  <div id="plan-usage"
+    style="padding: 10px; font-size: 11px; color: #666; text-align: center; border-top: 1px solid #eee;"></div>
+  <script src="popup.js"></script>
+</body>
+
+</html>
