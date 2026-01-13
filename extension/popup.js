@@ -9,18 +9,39 @@ function loadSavedItems() {
     const items = result.savedItems || [];
     listElement.innerHTML = ''; // Clear current list
 
-    // Update Plan Usage
+
+    // Update Plan Usage with better styling
     const usageElement = document.getElementById('plan-usage');
     if (usageElement) {
-        usageElement.textContent = `Free Plan: ${items.length}/10`;
+        const percentage = (items.length / 10) * 100;
+        const barColor = items.length >= 10 ? '#ff6b6b' : '#2effc3';
+        
+        usageElement.innerHTML = `
+            <div style="margin-bottom: 8px;">Free Plan: ${items.length}/10 saved items</div>
+            <div class="usage-bar">
+                <div class="usage-fill" style="width: ${percentage}%; background: ${barColor};"></div>
+            </div>
+        `;
+        
         if (items.length >= 10) {
-            usageElement.style.color = 'red';
-            usageElement.textContent += ' (Limit Reached)';
+            usageElement.innerHTML += '<div style="color: #ff6b6b; margin-top: 8px; font-size: 11px;">✨ Upgrade to Pro for unlimited saves!</div>';
         }
     }
 
     if (items.length === 0) {
-      listElement.innerHTML = '<div class="empty-state">No saved items yet. Select text on a page and right-click to save.</div>';
+      listElement.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z"/>
+              <path d="M2 17L12 22L22 17"/>
+              <path d="M2 12L12 17L22 12"/>
+            </svg>
+          </div>
+          <div class="empty-text">No saved items yet</div>
+          <div class="empty-hint">Select text on any page and right-click "Save to SaveIt"</div>
+        </div>
+      `;
       return;
     }
 
@@ -57,7 +78,7 @@ document.getElementById('sync-btn').addEventListener('click', () => {
             return;
         }
 
-        const syncUrl = 'http://localhost:3000/sync';
+        const syncUrl = 'https://saveit-nu.vercel.app/sync';
         chrome.tabs.create({ url: syncUrl }, (tab) => {
              // Inject script to pass data
              // We need to wait for the page to effectively load
