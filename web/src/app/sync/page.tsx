@@ -9,9 +9,15 @@ export default function SyncPage() {
     const [status, setStatus] = useState('Waiting for extension data... (Please keep this tab open)');
 
     useEffect(() => {
+        console.log('Sync page mounted, waiting for extension data...');
+
         const handleMessage = async (event: MessageEvent) => {
+            console.log('Message received:', event.data);
+
             // Basic security: In production, check event.origin
             if (event.data && event.data.type === 'SYNC_DATA' && event.data.items) {
+                console.log('Valid SYNC_DATA message with', event.data.items.length, 'items');
+
                 if (!user) {
                     setStatus('Please login to SaveIt in another tab, then try syncing again.');
                     return;
@@ -35,6 +41,7 @@ export default function SyncPage() {
 
                     await Promise.all(batchPromises);
                     setStatus(`Successfully synced ${count} items! You can now close this tab.`);
+                    console.log('Sync complete!');
                 } catch (error) {
                     console.error("Sync error:", error);
                     setStatus('Error syncing items. Check console.');

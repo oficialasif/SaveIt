@@ -79,24 +79,38 @@ document.getElementById('sync-btn').addEventListener('click', () => {
         }
 
         const syncUrl = 'https://saveit-nu.vercel.app/sync';
+        
+        // Create tab and wait for it to fully load
         chrome.tabs.create({ url: syncUrl }, (tab) => {
-             // Inject script to pass data
-             // We need to wait for the page to effectively load
-             chrome.scripting.executeScript({
-                 target: { tabId: tab.id },
-                 func: (items) => {
-                     // Poll for window readiness and post message
-                     const check = setInterval(() => {
-                         if (document.readyState === 'complete') {
-                             clearInterval(check);
-                             window.postMessage({ type: 'SYNC_DATA', items: items }, '*');
-                         }
-                     }, 100);
-                     // Timeout fallback
-                     setTimeout(() => clearInterval(check), 10000);
-                 },
-                 args: [items]
-             });
+            // Listen for tab updates
+            const listener = (tabId, changeInfo) => {
+                if (tabId === tab.id && changeInfo.status === 'complete') {
+                    // Remove listener once page is loaded
+                    chrome.tabs.onUpdated.removeListener(listener);
+                    
+                    // Wait a bit more to ensure page scripts are ready
+                    setTimeout(() => {
+                        chrome.scripting.executeScript({
+                            target: { tabId: tab.id },
+                            func: (itemsData) => {
+                                // Send message to page
+                                window.postMessage({ 
+                                    type: 'SYNC_DATA', 
+                                    items: itemsData 
+                                }, '*');
+                                console.log('Extension sent SYNC_DATA message with', itemsData.length, 'items');
+                            },
+                            args: [items]
+                        }).then(() => {
+                            console.log('Script executed successfully');
+                        }).catch((err) => {
+                            console.error('Script execution error:', err);
+                        });
+                    }, 1000); // Wait 1 second after page loads
+                }
+            };
+            
+            chrome.tabs.onUpdated.addListener(listener);
         });
     });
 });
