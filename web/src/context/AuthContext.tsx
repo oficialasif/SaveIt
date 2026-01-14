@@ -17,10 +17,12 @@ interface AuthContextType {
     user: User | null;
     loading: boolean;
     isPro: boolean;
+    totalSavedCount: number;
     loginWithGoogle: () => Promise<void>;
     loginWithEmail: (email: string, password: string) => Promise<void>;
     signupWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
     logout: () => Promise<void>;
+    refreshUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -31,6 +33,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [isPro, setIsPro] = useState(false);
+    const [totalSavedCount, setTotalSavedCount] = useState(0);
     const router = useRouter();
 
     useEffect(() => {
@@ -41,19 +44,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 // Check subscription status from Firestore
                 const userDoc = await getDoc(doc(db, 'users', user.uid));
                 if (userDoc.exists()) {
-                    setIsPro(userDoc.data()?.isPro || false);
+                    const data = userDoc.data();
+                    setIsPro(data?.isPro || false);
+                    setTotalSavedCount(data?.totalSavedCount || 0);
+
+                    // Initialize totalSavedCount for existing users if needed
+                    if (data?.totalSavedCount === undefined) {
+                        const { collection, query, where, getDocs } = await import('firebase/firestore');
+                        const itemsQuery = query(collection(db, 'savedItems'), where('userId', '==', user.uid));
+                        const itemsSnapshot = await getDocs(itemsQuery);
+                        const currentCount = itemsSnapshot.size;
+
+                        await setDoc(doc(db, 'users', user.uid), {
+                            ...data,
+                            totalSavedCount: currentCount
+                        }, { merge: true });
+
+                        setTotalSavedCount(currentCount);
+                        console.log('Initialized totalSavedCount for existing user:', currentCount);
+                    }
                 } else {
                     // Create user document if it doesn't exist
                     await setDoc(doc(db, 'users', user.uid), {
                         email: user.email,
                         displayName: user.displayName,
                         isPro: false,
+                        totalSavedCount: 0,
                         createdAt: new Date(),
                     });
                     setIsPro(false);
+                    setTotalSavedCount(0);
                 }
             } else {
                 setIsPro(false);
+                setTotalSavedCount(0);
             }
 
             setLoading(false);
@@ -104,8 +128,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
+    const refreshUserData = async () => {
+        if (!user) return;
+
+        try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists()) {
+                const data = userDoc.data();
+                setIsPro(data?.isPro || false);
+                setTotalSavedCount(data?.totalSavedCount || 0);
+                console.log('✅ User data refreshed - totalSavedCount:', data?.totalSavedCount);
+            }
+        } catch (error) {
+            console.error('Error refreshing user data:', error);
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, loading, isPro, loginWithGoogle, loginWithEmail, signupWithEmail, logout }}>
+        <AuthContext.Provider value={{ user, loading, isPro, totalSavedCount, loginWithGoogle, loginWithEmail, signupWithEmail, logout, refreshUserData }}>
             {children}
         </AuthContext.Provider>
     );

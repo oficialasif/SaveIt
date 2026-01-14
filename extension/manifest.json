@@ -8,7 +8,8 @@
     "contextMenus",
     "activeTab",
     "scripting",
-    "tabs"
+    "tabs",
+    "notifications"
   ],
   "background": {
     "service_worker": "background.js"
@@ -25,5 +26,17 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:3000/sync*",
+        "https://saveit-nu.vercel.app/sync*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ]
 }

@@ -25,7 +25,7 @@
       padding: 16px;
       display: flex;
       align-items: center;
-      justify-center: space-between;
+      justify-content: space-between;
     }
 
     .logo-container {
@@ -54,6 +54,33 @@
       font-size: 18px;
       font-weight: 700;
       color: white;
+    }
+
+    .header-buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #dashboard-btn {
+      background: rgba(46, 255, 195, 0.1);
+      color: #2effc3;
+      border: 1px solid rgba(46, 255, 195, 0.3);
+      padding: 6px 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #dashboard-btn:hover {
+      background: rgba(46, 255, 195, 0.2);
+      border-color: #2effc3;
+      transform: translateY(-1px);
     }
 
     #sync-btn {
@@ -97,11 +124,14 @@
     .item {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
+      border-radius: 8px;
       padding: 12px;
       margin-bottom: 8px;
       cursor: pointer;
       transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .item:hover {
@@ -141,6 +171,24 @@
 
     .item-time {
       color: rgba(255, 255, 255, 0.4);
+    }
+
+    .item-delete {
+      background: rgba(255, 107, 107, 0.2);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      color: #ff6b6b;
+      padding: 4px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 10px;
+      transition: all 0.2s;
+      margin-left: 8px;
+    }
+
+    .item-delete:hover {
+      background: rgba(255, 107, 107, 0.3);
+      border-color: #ff6b6b;
+      transform: scale(1.05);
     }
 
     .empty-state {
@@ -214,7 +262,17 @@
       </div>
       <span class="logo-text">SaveIt</span>
     </div>
-    <button id="sync-btn">Sync</button>
+    <div class="header-buttons">
+      <button id="dashboard-btn" title="Open Dashboard">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" />
+          <rect x="3" y="14" width="7" height="7" />
+        </svg>
+      </button>
+      <button id="sync-btn">Sync</button>
+    </div>
   </header>
   <ul id="saved-list"></ul>
   <div id="plan-usage"></div>

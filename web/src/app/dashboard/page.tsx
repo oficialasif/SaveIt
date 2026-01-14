@@ -20,7 +20,7 @@ const itemVariants = {
 };
 
 export default function DashboardPage() {
-    const { user, loading, logout, isPro } = useAuth();
+    const { user, loading, logout, isPro, totalSavedCount, refreshUserData } = useAuth();
     const router = useRouter();
     const [items, setItems] = useState<any[]>([]);
     const [fetching, setFetching] = useState(true);
@@ -31,6 +31,7 @@ export default function DashboardPage() {
         if (user) {
             console.log('Fetching items for user:', user.uid);
             fetchItems();
+            refreshUserData(); // Refresh user data to get latest totalSavedCount
         }
     }, [user]);
 
@@ -62,6 +63,25 @@ export default function DashboardPage() {
             console.error("Error fetching items:", error);
         } finally {
             setFetching(false);
+        }
+    };
+
+    const deleteItem = async (itemId: string) => {
+        if (!confirm('Are you sure you want to delete this item?')) return;
+
+        try {
+            // Delete from Firestore
+            const { deleteDoc, doc } = await import('firebase/firestore');
+            await deleteDoc(doc(db, "savedItems", itemId));
+
+            // Update local state
+            setItems(items.filter(item => item.id !== itemId));
+            console.log('✅ Item deleted from dashboard:', itemId);
+            console.log('ℹ️ Note: totalSavedCount remains unchanged (prevents bypassing upgrade)');
+            console.log('ℹ️ Extension items are only synced FROM extension TO web, not vice versa');
+        } catch (error) {
+            console.error("Error deleting item:", error);
+            alert('Failed to delete item. Please try again.');
         }
     };
 
@@ -141,8 +161,12 @@ export default function DashboardPage() {
 
                     {/* Stats Cards */}
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                        <StatCard label="Total Saved" value={items.length} />
-                        <StatCard label="This Week" value="12" />
+                        <StatCard label="Current Items" value={items.length} />
+                        <StatCard
+                            label={!isPro ? "Lifetime Saves (Max 10)" : "Lifetime Saves"}
+                            value={totalSavedCount}
+                            highlight={!isPro && totalSavedCount >= 10}
+                        />
                         <div className="bg-gradient-to-br from-[#2effc3]/20 to-[#03122f] border-2 border-[#2effc3] rounded-2xl p-6 cursor-pointer hover:scale-[1.02] transition">
                             <div className="text-sm text-gray-400 mb-2">Upgrade</div>
                             <div className="font-bold text-lg text-[#2effc3]">Go Pro</div>
@@ -205,10 +229,18 @@ export default function DashboardPage() {
                                                 <span className="text-xs text-gray-400 truncate">{new URL(item.url).hostname}</span>
                                             </div>
                                             <div className="opacity-0 group-hover:opacity-100 transition flex gap-2">
-                                                <button className="p-1.5 hover:bg-white/10 rounded text-gray-400 hover:text-[#2effc3]">
+                                                <button
+                                                    onClick={() => navigator.clipboard.writeText(item.text)}
+                                                    className="p-1.5 hover:bg-white/10 rounded text-gray-400 hover:text-[#2effc3]"
+                                                    title="Copy text"
+                                                >
                                                     <Copy className="w-3.5 h-3.5" />
                                                 </button>
-                                                <button className="p-1.5 hover:bg-white/10 rounded text-gray-400 hover:text-red-400">
+                                                <button
+                                                    onClick={() => deleteItem(item.id)}
+                                                    className="p-1.5 hover:bg-white/10 rounded text-gray-400 hover:text-red-400"
+                                                    title="Delete item"
+                                                >
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
@@ -248,11 +280,12 @@ function NavItem({ icon, label, active = false }: { icon: any, label: string, ac
     );
 }
 
-function StatCard({ label, value }: { label: string, value: string | number }) {
+function StatCard({ label, value, highlight = false }: { label: string, value: string | number, highlight?: boolean }) {
     return (
-        <div className="bg-[#03122f] p-6 rounded-2xl border border-white/10">
+        <div className={`bg-[#03122f] p-6 rounded-2xl border ${highlight ? 'border-red-500 animate-pulse' : 'border-white/10'}`}>
             <div className="text-gray-400 text-sm mb-2">{label}</div>
-            <div className="text-3xl font-bold">{value}</div>
+            <div className={`text-3xl font-bold ${highlight ? 'text-red-400' : ''}`}>{value}</div>
+            {highlight && <div className="text-xs text-red-400 mt-2">⚠️ Upgrade Required</div>}
         </div>
     );
 }

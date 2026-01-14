@@ -1,16 +1,20 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { Layers, ArrowRight, Mail, Lock, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
     const { loginWithGoogle, loginWithEmail } = useAuth();
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const returnTo = searchParams.get('returnTo') || '/dashboard';
 
     const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -19,10 +23,26 @@ export default function LoginPage() {
 
         try {
             await loginWithEmail(email, password);
+            // Redirect will be handled by AuthContext, but we can override if returnTo is set
+            if (returnTo !== '/dashboard') {
+                router.push(returnTo);
+            }
         } catch (err: any) {
             setError(err.message || 'Failed to login');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        try {
+            await loginWithGoogle();
+            // Redirect will be handled by AuthContext, but we can override if returnTo is set
+            if (returnTo !== '/dashboard') {
+                router.push(returnTo);
+            }
+        } catch (err: any) {
+            setError(err.message || 'Failed to login with Google');
         }
     };
 
@@ -148,7 +168,7 @@ export default function LoginPage() {
                         </div>
 
                         <button
-                            onClick={loginWithGoogle}
+                            onClick={handleGoogleLogin}
                             className="w-full flex items-center justify-center gap-3 bg-white text-[#000d26] font-semibold py-3.5 px-6 rounded-xl hover:bg-gray-100 transition shadow-lg"
                         >
                             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
