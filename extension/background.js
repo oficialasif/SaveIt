@@ -35,7 +35,7 @@ async function saveItem(text, url, title) {
     // If we have a userId, check the real limit from Firestore
     if (cached.userId) {
       try {
-        const response = await fetch('http://localhost:3000/api/user-stats', {
+        const response = await fetch('https://saveit-nu.vercel.app/api/user-stats', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: cached.userId })
@@ -68,7 +68,7 @@ async function saveItem(text, url, title) {
             });
             
             // Open dashboard with upgrade section
-            chrome.tabs.create({ url: 'http://localhost:3000/dashboard' });
+            chrome.tabs.create({ url: 'https://saveit-nu.vercel.app/dashboard' });
             
             canSave = false;
             return;
@@ -85,7 +85,7 @@ async function saveItem(text, url, title) {
             title: 'SaveIt - Upgrade Required',
             message: 'You have reached the free limit. Upgrade to Pro!'
           });
-          chrome.tabs.create({ url: 'http://localhost:3000/dashboard' });
+          chrome.tabs.create({ url: 'https://saveit-nu.vercel.app/dashboard' });
           canSave = false;
           return;
         }
@@ -128,7 +128,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'PERFORM_SYNC') {
     console.log(`🔄 Starting sync process with ${message.items.length} items`);
     
-    const syncUrl = 'http://localhost:3000/sync';
+    const syncUrl = 'https://saveit-nu.vercel.app/sync';
     console.log(`🌐 Opening sync page: ${syncUrl}`);
     
     // Create tab and wait for it to fully load

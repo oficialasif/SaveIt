@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Dashboard button handler
   document.getElementById('dashboard-btn').addEventListener('click', () => {
-    chrome.tabs.create({ url: 'http://localhost:3000/dashboard' });
+    chrome.tabs.create({ url: 'https://saveit-nu.vercel.app/dashboard' });
   });
   
   // Show connection banner if not connected
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (banner) {
         banner.style.display = 'block';
         banner.addEventListener('click', () => {
-          chrome.tabs.create({ url: 'http://localhost:3000/dashboard' });
+          chrome.tabs.create({ url: 'https://saveit-nu.vercel.app/dashboard' });
         });
       }
     }
@@ -56,7 +56,7 @@ async function loadSavedItems() {
         try {
           const firestoreIds = itemsWithFirestoreId.map(item => item.firestoreId);
           
-          const response = await fetch('http://localhost:3000/api/check-items', {
+          const response = await fetch('https://saveit-nu.vercel.app/api/check-items', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ itemIds: firestoreIds })
@@ -172,7 +172,7 @@ async function deleteItem(item, index, liElement) {
     const firestorePromise = (async () => {
         if (item.firestoreId) {
             try {
-                const response = await fetch('http://localhost:3000/api/delete-item', {
+                const response = await fetch('https://saveit-nu.vercel.app/api/delete-item', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ itemId: item.firestoreId })
@@ -228,7 +228,7 @@ function updatePlanUsage(itemCount) {
     // If we have a userId, fetch the real totalSavedCount from Firestore
     if (cached.userId) {
       try {
-        const response = await fetch('http://localhost:3000/api/user-stats', {
+        const response = await fetch('https://saveit-nu.vercel.app/api/user-stats', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: cached.userId })
