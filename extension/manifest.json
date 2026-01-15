@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SaveIt – Web Content Saver",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Save important content from any website in one click.",
   "permissions": [
     "storage",
@@ -30,7 +30,6 @@
   "content_scripts": [
     {
       "matches": [
-        "http://localhost:3000/sync*",
         "https://saveit-nu.vercel.app/sync*"
       ],
       "js": [

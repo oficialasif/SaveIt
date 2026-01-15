@@ -25,7 +25,42 @@ export default function DashboardPage() {
     const [items, setItems] = useState<any[]>([]);
     const [fetching, setFetching] = useState(true);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
     const [searchQuery, setSearchQuery] = useState('');
+    const [upgradeLoading, setUpgradeLoading] = useState(false);
+
+    const handleUpgrade = async () => {
+        if (!user) return;
+        setUpgradeLoading(true);
+
+        try {
+            const response = await fetch('/api/create-checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: user.email,
+                    userId: user.uid,
+                    name: user.displayName || 'SaveIt User',
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to create checkout');
+            }
+
+            if (data.checkoutUrl) {
+                window.location.href = data.checkoutUrl;
+            } else {
+                throw new Error('No checkout URL received from server');
+            }
+        } catch (error) {
+            console.error('Upgrade error:', error);
+            alert(`Failed to start checkout: ${error instanceof Error ? error.message : 'Please try again'}`);
+            setUpgradeLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (user) {
@@ -166,11 +201,18 @@ export default function DashboardPage() {
                             label={!isPro ? "Lifetime Saves (Max 10)" : "Lifetime Saves"}
                             value={totalSavedCount}
                             highlight={!isPro && totalSavedCount >= 10}
+                            onWarningClick={handleUpgrade}
                         />
-                        <div className="bg-gradient-to-br from-[#2effc3]/20 to-[#03122f] border-2 border-[#2effc3] rounded-2xl p-6 cursor-pointer hover:scale-[1.02] transition">
+                        <button
+                            onClick={handleUpgrade}
+                            disabled={upgradeLoading}
+                            className="bg-gradient-to-br from-[#2effc3]/20 to-[#03122f] border-2 border-[#2effc3] rounded-2xl p-6 cursor-pointer hover:scale-[1.02] transition text-left disabled:opacity-50 disabled:cursor-not-allowed w-full"
+                        >
                             <div className="text-sm text-gray-400 mb-2">Upgrade</div>
-                            <div className="font-bold text-lg text-[#2effc3]">Go Pro</div>
-                        </div>
+                            <div className="font-bold text-lg text-[#2effc3]">
+                                {upgradeLoading ? 'Loading...' : 'Go Pro'}
+                            </div>
+                        </button>
                     </div>
 
                     {/* Toolbar */}
@@ -280,12 +322,19 @@ function NavItem({ icon, label, active = false }: { icon: any, label: string, ac
     );
 }
 
-function StatCard({ label, value, highlight = false }: { label: string, value: string | number, highlight?: boolean }) {
+function StatCard({ label, value, highlight = false, onWarningClick }: { label: string, value: string | number, highlight?: boolean, onWarningClick?: () => void }) {
     return (
         <div className={`bg-[#03122f] p-6 rounded-2xl border ${highlight ? 'border-red-500 animate-pulse' : 'border-white/10'}`}>
             <div className="text-gray-400 text-sm mb-2">{label}</div>
             <div className={`text-3xl font-bold ${highlight ? 'text-red-400' : ''}`}>{value}</div>
-            {highlight && <div className="text-xs text-red-400 mt-2">⚠️ Upgrade Required</div>}
+            {highlight && (
+                <div
+                    onClick={onWarningClick}
+                    className="text-xs text-red-400 mt-2 cursor-pointer hover:underline flex items-center gap-1 font-bold"
+                >
+                    ⚠️ Upgrade Required
+                </div>
+            )}
         </div>
     );
 }
